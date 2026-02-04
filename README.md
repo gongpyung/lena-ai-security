@@ -1,88 +1,261 @@
-# LENA AI Security Mail Automation v3.0
+<p align="center">
+  <a href="README.md">English</a> | <a href="README.ko.md">한국어</a>
+</p>
 
-Gmail 보안 메일링 리스트를 자동 수집하고, Gemini AI로 분석하여 보안 보고서를 발송하는 Google Apps Script 프로젝트입니다.
+<p align="center">
+  <img src="https://img.shields.io/badge/🛡️_LENA_AI-Security_Automation-667eea?style=for-the-badge&labelColor=764ba2" alt="LENA AI Security" />
+</p>
 
-## 주요 기능
+<p align="center">
+  <strong>Automated security mail analysis powered by Gemini AI</strong><br/>
+  Collects security advisories from Gmail, analyzes CVEs with AI, and delivers daily digest reports.
+</p>
 
-- **Gmail 라벨 기반 자동 수집** - 제품별 Gmail 라벨(`LENA-TOMCAT`, `LENA-APACHE`, `LENA-NGINX`)에서 미읽은 보안 메일 자동 수집
-- **스마트 제품 분류** - 동일 라벨을 공유하는 제품(Tomcat/TomEE)을 키워드 기반으로 자동 분류
-- **CVE 추출 및 중복 제거** - 메일 본문에서 CVE ID를 자동 추출하고, 중복 메일을 필터링
-- **Gemini AI 구조화 분석** - Structured Output(JSON Schema)으로 일관된 분석 결과 생성
-- **이중 보고서** - 경영진용 Executive Summary + 기술진용 Technical Details
-- **LENA 버전 영향도 분석** - 사용 중인 엔진 버전과 취약점 영향 범위 자동 비교
-- **Daily Digest** - 제품별 분석 결과를 통합한 일일 종합 보고서
-- **Outlook 호환 HTML 템플릿** - MSO 조건부 주석 포함, table 기반 이메일 렌더링
-- **이력 관리** - Google Sheets 기반 CVE/발송 이력 추적
-- **관리자 알림** - 일일 알림 횟수 제한(10건)으로 알림 폭주 방지
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Google_Apps_Script-4285F4?style=flat-square&logo=google&logoColor=white" alt="Google Apps Script" />
+  <img src="https://img.shields.io/badge/AI-Gemini_API-8E75B2?style=flat-square&logo=google&logoColor=white" alt="Gemini API" />
+  <img src="https://img.shields.io/badge/Version-3.0-blue?style=flat-square" alt="Version 3.0" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License" />
+  <img src="https://img.shields.io/badge/Runtime-V8-F7DF1E?style=flat-square&logo=javascript&logoColor=black" alt="V8 Runtime" />
+</p>
 
-## 모니터링 대상 제품
+---
 
-| 제품 | Gmail 라벨 | 현재 버전 |
-|------|-----------|----------|
-| Apache HTTP Server | `LENA-APACHE` | 2.4.66 |
-| Apache Tomcat | `LENA-TOMCAT` | 7.0.107, 8.5.100, 9.0.113, 10.1.50 |
-| Apache TomEE | `LENA-TOMCAT` | 1.7.2, 7.1.4, 8.0.16 |
-| Nginx | `LENA-NGINX` | 1.29.3 |
+## ✨ Features
 
-## 아키텍처
+<table>
+<tr>
+<td width="50%">
+
+### 📬 Smart Mail Collection
+- Gmail label-based auto-collection
+- Keyword filtering per product
+- Smart product classification (shared labels)
+- CVE extraction with deduplication
+
+</td>
+<td width="50%">
+
+### 🤖 AI-Powered Analysis
+- Gemini Structured Output (JSON Schema)
+- CVSS score & severity assessment
+- Version impact analysis
+- Few-shot prompting for consistency
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 📊 Dual Reporting
+- Executive Summary (for management)
+- Technical Details (for engineers)
+- CVE severity table with NVD links
+- LENA version impact matrix
+
+</td>
+<td width="50%">
+
+### 📧 Enterprise Email
+- Outlook-compatible HTML (MSO conditionals)
+- Table-based layout (no CSS Grid/Flex)
+- WCAG 4.5:1 color contrast
+- TLP classification badges
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 📈 History & Tracking
+- Google Sheets CVE history
+- Send history with status tracking
+- Cached O(1) duplicate detection
+- Weekly auto-cleanup
+
+</td>
+<td width="50%">
+
+### 🔔 Admin Notifications
+- Error alerts with rate limiting (10/day)
+- Daily processing summary
+- Fatal error escalation
+- Stack trace reporting
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🎯 Monitored Products
+
+| Product | Gmail Label | Current Versions | NVD Prefix |
+|---------|:-----------:|-----------------|------------|
+| **Apache HTTP Server** | `LENA-APACHE` | `2.4.66` | `cpe:2.3:a:apache:http_server` |
+| **Apache Tomcat** | `LENA-TOMCAT` | `7.0.107` `8.5.100` `9.0.113` `10.1.50` | `cpe:2.3:a:apache:tomcat` |
+| **Apache TomEE** | `LENA-TOMCAT` | `1.7.2` `7.1.4` `8.0.16` | `cpe:2.3:a:apache:tomee` |
+| **Nginx** | `LENA-NGINX` | `1.29.3` | `cpe:2.3:a:f5:nginx` |
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart TD
+    A["📬 Gmail Labels<br/><small>LENA-TOMCAT, LENA-APACHE, LENA-NGINX</small>"] --> B["📥 Collector<br/><small>Collect & Classify</small>"]
+    B --> C{"🔄 Dedup<br/><small>CVE-based</small>"}
+    C -->|Unique| D["🤖 Analyzer<br/><small>Gemini Structured Output</small>"]
+    C -->|Duplicate| X["🗑️ Skip"]
+    D --> E["🎨 Renderer<br/><small>Table-based HTML</small>"]
+    E --> F["📊 Reporter<br/><small>Daily Digest</small>"]
+    F --> G["📧 Send<br/><small>MailApp</small>"]
+    G --> H["📈 History<br/><small>Google Sheets</small>"]
+    G --> I["🔔 Notifier<br/><small>Admin Summary</small>"]
+
+    style A fill:#4285F4,color:#fff,stroke:none
+    style D fill:#8E75B2,color:#fff,stroke:none
+    style G fill:#34A853,color:#fff,stroke:none
+    style X fill:#EA4335,color:#fff,stroke:none
+```
+
+---
+
+## 📁 Project Structure
 
 ```
-Gmail 라벨 수집 (Collector)
-    ↓
-제품 분류 + 중복 제거 (Collector)
-    ↓
-Gemini AI 분석 (Analyzer + Schema)
-    ↓
-HTML 보고서 렌더링 (Renderer)
-    ↓
-Daily Digest 조립 (Reporter)
-    ↓
-메일 발송 + 이력 기록 (Main + History)
-    ↓
-관리자 알림 (Notifier)
+lena-ai-security/
+├── 🔧 Config.js          # Product config, API keys, constants
+├── 🚀 Main.js            # Pipeline orchestrator (entry point)
+├── 📥 Collector.js        # Mail collection, classification, dedup
+├── 🤖 Analyzer.js         # Gemini Structured Output analysis
+├── 🧠 AI.js               # Gemini API calls, prompt engineering
+├── 📐 Schema.js           # JSON Schema for Gemini responses
+├── 🎨 Renderer.js         # Table-based HTML email template engine
+├── 📊 Reporter.js         # Daily Digest assembly
+├── 📧 Email.js            # Legacy HTML report builder
+├── 📈 History.js          # Google Sheets history management
+├── 🔔 Notifier.js         # Admin alerts & daily summary
+├── ⚙️ Setup.js            # Setup wizard (API key, labels, triggers)
+├── 🧪 Test.js             # Unit tests
+├── 📋 Core.js             # Legacy core logic
+└── 📄 appsscript.json     # Apps Script manifest
 ```
 
-## 파일 구조
+---
 
-| 파일 | 역할 |
-|------|------|
-| `Config.js` | 제품 설정, API 키 관리, 상수 정의 |
-| `Main.js` | 파이프라인 오케스트레이터 (메인 진입점) |
-| `Core.js` | 레거시 핵심 로직 (개별 제품 처리) |
-| `Collector.js` | 메일 수집, 제품 분류, CVE 추출, 중복 제거 |
-| `Analyzer.js` | Gemini Structured Output 기반 AI 분석 |
-| `AI.js` | Gemini API 호출, 프롬프트 생성, 응답 파싱 |
-| `Schema.js` | Gemini 응답 JSON Schema 정의 |
-| `Renderer.js` | table 기반 HTML 이메일 템플릿 엔진 |
-| `Reporter.js` | Daily Digest 통합 보고서 조립 |
-| `Email.js` | 레거시 HTML 보고서 생성 |
-| `History.js` | Google Sheets 이력 관리 (CVE/발송) |
-| `Notifier.js` | 관리자 알림 (에러/일일 요약) |
-| `Setup.js` | 초기 설정 마법사 (API 키, 라벨, 트리거) |
-| `Test.js` | 단위 테스트 |
+## 🚀 Quick Start
 
-## 사전 요구사항
+### Prerequisites
 
-- Google 계정
-- [Gemini API 키](https://aistudio.google.com/app/apikey)
-- [clasp](https://github.com/nicksqudge/clasp-env) (로컬 개발 시)
+- Google Account with Gmail
+- [Gemini API Key](https://aistudio.google.com/app/apikey)
+- [clasp](https://github.com/google/clasp) (for local development)
 
-## 빠른 시작
+### 1. Clone & Deploy
 
-[QUICKSTART.md](QUICKSTART.md) 참조
+```bash
+npm install -g @google/clasp
+clasp login
+clasp clone <SCRIPT_ID> --rootDir .
+```
 
-## 배포
+### 2. Set API Key
 
-[DEPLOYMENT.md](DEPLOYMENT.md) 참조
+Run `setupApiKey()` in the Apps Script editor:
 
-## 테스트
+```javascript
+function setupApiKey() {
+  PropertiesService.getScriptProperties().setProperty(
+    "GEMINI_API_KEY", "YOUR_KEY_HERE"
+  );
+}
+```
 
-[TESTING.md](TESTING.md) 참조
+> ⚠️ **Remove the key from source code after running.**
 
-## 기여
+### 3. Run Setup Wizard
 
-[CONTRIBUTING.md](CONTRIBUTING.md) 참조
+```javascript
+runSetupWizard()  // Creates spreadsheet, labels, triggers
+```
 
-## 라이선스
+### 4. Verify
 
-[MIT License](LICENSE)
+```javascript
+checkConfiguration()  // Validates all settings
+```
+
+> 📖 See [QUICKSTART.md](QUICKSTART.md) for the full setup guide.
+
+---
+
+## 📬 How It Works
+
+```
+1️⃣  Trigger fires daily at 08:00 KST (weekdays only)
+2️⃣  Collector scans Gmail labels for unread security mails
+3️⃣  Mails are classified by product and deduplicated by CVE
+4️⃣  Gemini AI analyzes each mail with Structured Output
+5️⃣  Results are rendered into Outlook-compatible HTML
+6️⃣  Daily Digest report is sent to the security team
+7️⃣  CVE history is recorded in Google Sheets
+8️⃣  Admin receives a processing summary
+```
+
+---
+
+## 🧪 Testing
+
+Run `testAll()` in the Apps Script editor:
+
+```
+✓ testBuildEngineVersions    — Engine version map generation
+✓ testGetApiKey              — API key setup/error paths
+✓ testExtractCveIds          — CVE regex extraction & dedup
+✓ testGroupAndDeduplicate    — Mail grouping & CVE dedup
+✓ testSchemaValidity         — Gemini response schema
+✓ testCveSeverityTable       — HTML rendering & severity sort
+✓ testAggregateStats         — Statistics aggregation
+✓ testBuildDigestSubject     — Digest subject generation
+=== ALL TESTS PASSED ===
+```
+
+> 📖 See [TESTING.md](TESTING.md) for the full testing guide.
+
+---
+
+## 📖 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [**QUICKSTART.md**](QUICKSTART.md) | First-time setup guide |
+| [**DEPLOYMENT.md**](DEPLOYMENT.md) | Deployment, triggers, and configuration |
+| [**TESTING.md**](TESTING.md) | Unit tests and debugging |
+| [**CONTRIBUTING.md**](CONTRIBUTING.md) | Development workflow and coding standards |
+
+---
+
+## ⚙️ Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MODEL_NAME` | `gemini-3-flash-preview` | Gemini model |
+| `MAX_THREADS` | `10` | Max Gmail threads per label |
+| `MAX_BODY_LENGTH` | `10000` | Max mail body for analysis |
+| `API_CALL_DELAY` | `3000ms` | Delay between API calls |
+| `MAX_RETRIES` | `3` | API retry attempts |
+| `TLP_LEVEL` | `TLP:AMBER` | Report classification |
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+<p align="center">
+  <sub>Powered by <strong>Gemini AI</strong> · Built with <strong>Google Apps Script</strong></sub><br/>
+  <sub>Made with ❤️ by the LENA Security Team</sub>
+</p>
