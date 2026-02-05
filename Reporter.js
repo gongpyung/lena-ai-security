@@ -280,7 +280,7 @@ function renderDigestCveTable(allResults) {
       '<td style="padding:8px 12px; border-bottom:1px solid #e0e0e0; text-align:center;">',
       '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">',
       '<tr><td style="background-color:' + colors.bg + '; color:' + colors.text + '; font-weight:bold; font-size:12px; padding:2px 8px;">',
-      scoreDisplay + ' ' + c.cvssSeverity,
+      (c.cvssSeverity === 'UNKNOWN' ? '미공개' : scoreDisplay + ' ' + c.cvssSeverity),
       '</td></tr></table>',
       '</td>',
       '<td style="padding:8px 12px; border-bottom:1px solid #e0e0e0; font-size:12px; text-align:center;">',
@@ -392,6 +392,13 @@ function renderProductSection(productKey, productResults) {
  * Digest 버전 영향도 종합 테이블
  */
 function renderDigestVersionSummary(allResults) {
+  // 제품이 1개뿐이면 제품별 섹션에서 이미 표시되므로 종합 테이블 생략
+  var productCount = 0;
+  for (var k in allResults) {
+    if (allResults[k].length > 0) productCount++;
+  }
+  if (productCount <= 1) return '';
+
   var allVersions = [];
   for (var key in allResults) {
     var results = allResults[key];

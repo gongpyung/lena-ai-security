@@ -50,7 +50,7 @@ function testGetApiKey() {
 }
 
 function testGroupAndDeduplicate() {
-  // 테스트 데이터: 동일 CVE를 포함하는 메일 2건 + 다른 CVE 메일 1건
+  // 테스트 데이터: 동일 CVE, 다른 messageId 메일 2건 + 진짜 중복 1건 + 다른 제품 1건
   var mails = [
     {
       productKey: "apache-tomcat",
@@ -64,9 +64,17 @@ function testGroupAndDeduplicate() {
       productKey: "apache-tomcat",
       productName: "Apache Tomcat",
       gmailLabel: "LENA-TOMCAT",
-      body: "Details about CVE-2024-12345 vulnerability",
-      subject: "Re: CVE-2024-12345",
+      body: "Fixed CVE-2024-12345 in Apache Tomcat 10.1.34",
+      subject: "Security: CVE-2024-12345 (10.x)",
       messageId: "msg2"
+    },
+    {
+      productKey: "apache-tomcat",
+      productName: "Apache Tomcat",
+      gmailLabel: "LENA-TOMCAT",
+      body: "Fixed CVE-2024-12345 in Apache Tomcat 9.0.98",
+      subject: "Security: CVE-2024-12345",
+      messageId: "msg1"
     },
     {
       productKey: "nginx",
@@ -80,13 +88,13 @@ function testGroupAndDeduplicate() {
 
   var groups = groupAndDeduplicate(mails);
 
-  // apache-tomcat 그룹: 중복 CVE 메일 제거되어 1건만 존재
+  // apache-tomcat: msg1과 msg2 모두 유지 (같은 CVE지만 다른 messageId), 중복 msg1 제거
   assert(groups["apache-tomcat"] !== undefined, "tomcat group exists");
-  assert(groups["apache-tomcat"].mails.length === 1, "tomcat: duplicate removed, 1 mail");
+  assert(groups["apache-tomcat"].mails.length === 2, "tomcat: 2 mails (same CVE but different messageId)");
   assert(groups["apache-tomcat"].cveIds.length === 1, "tomcat: 1 unique CVE");
   assert(groups["apache-tomcat"].cveIds[0] === "CVE-2024-12345", "tomcat: correct CVE ID");
 
-  // nginx 그룹: 1건
+  // nginx: 1건
   assert(groups["nginx"] !== undefined, "nginx group exists");
   assert(groups["nginx"].mails.length === 1, "nginx: 1 mail");
   assert(groups["nginx"].cveIds[0] === "CVE-2024-99999", "nginx: correct CVE ID");

@@ -62,8 +62,47 @@ function collectUnreadMails() {
     allMails[j].productName = classified.productName;
   }
 
-  Logger.log("[Collector] 총 " + allMails.length + "건 수집 완료");
-  return allMails;
+  // Step 3: 버전 필터링
+  var filteredMails = [];
+  for (var m = 0; m < allMails.length; m++) {
+    var mail = allMails[m];
+    var product = PRODUCTS[mail.productKey];
+
+    // 제품 정보가 없으면 안전하게 포함
+    if (!product || !product.versions) {
+      filteredMails.push(mail);
+      continue;
+    }
+
+    // LENA 버전 가져오기 (versions 객체에서 첫 번째 값)
+    var lenaVersions = null;
+    for (var vKey in product.versions) {
+      lenaVersions = product.versions[vKey];
+      break;  // 첫 번째 엔진의 버전만 사용
+    }
+
+    // LENA 버전이 없으면 안전하게 포함
+    if (!lenaVersions) {
+      filteredMails.push(mail);
+      continue;
+    }
+
+    // 메일에서 버전 추출
+    var mailVersions = extractVersionsFromMail(mail.subject, mail.body);
+
+    // 분석 대상 여부 판단
+    if (shouldAnalyzeMail(mailVersions, lenaVersions)) {
+      filteredMails.push(mail);
+    } else {
+      Logger.log("[Collector] 버전 필터링 - 건너뜀 (LENA 미해당): " + mail.subject);
+      // skip된 메일도 읽음 처리
+      mail.thread.markRead();
+    }
+  }
+
+  Logger.log("[Collector] 총 " + allMails.length + "건 수집, " +
+             filteredMails.length + "건 필터링 완료 (버전 기준)");
+  return filteredMails;
 }
 
 /**
@@ -164,13 +203,76 @@ function uniqueArray(arr) {
 }
 
 /**
- * 수집된 메일을 제품별로 그룹핑하고 CVE 기반 중복 제거
+ * 메일 제목과 본문에서 버전 번호를 추출
+ * @param {string} subject - 메일 제목
+ * @param {string} body - 메일 본문
+ * @returns {Array<string>} 추출된 버전 번호 목록 (중복 제거됨)
+ */
+function extractVersionsFromMail(subject, body) {
+  var text = subject + " " + body;
+  var pattern = /(\d+\.\d+\.\d+)/g;
+  var matches = text.match(pattern);
+  return matches ? uniqueArray(matches) : [];
+}
+
+/**
+ * 버전 번호를 major.minor.patch로 파싱
+ * @param {string} version - 버전 문자열 (예: "1.29.3")
+ * @returns {Object} { major, minor, patch }
+ */
+function parseVersion(version) {
+  var parts = version.split(".");
+  return {
+    major: parseInt(parts[0], 10),
+    minor: parseInt(parts[1], 10),
+    patch: parseInt(parts[2], 10)
+  };
+}
+
+/**
+ * 메일이 LENA 버전에 해당하는지 판단
+ * @param {Array<string>} mailVersions - 메일에서 추출한 버전 배열
+ * @param {string|Array<string>} lenaVersions - LENA 사용 버전 (단일 또는 배열)
+ * @returns {boolean} 분석 대상이면 true, 건너뛰면 false
+ */
+function shouldAnalyzeMail(mailVersions, lenaVersions) {
+  // 메일에서 버전을 하나도 추출 못한 경우 → 안전하게 분석 대상으로 처리
+  if (!mailVersions || mailVersions.length === 0) {
+    return true;
+  }
+
+  // LENA 버전이 배열이 아니면 배열로 변환
+  var lenaVersionArray = Array.isArray(lenaVersions) ? lenaVersions : [lenaVersions];
+
+  // 메일의 여러 버전 중 하나라도 분석 대상이면 true
+  for (var i = 0; i < mailVersions.length; i++) {
+    var mailVer = parseVersion(mailVersions[i]);
+
+    // LENA 버전 중 하나라도 매칭되는지 확인
+    for (var j = 0; j < lenaVersionArray.length; j++) {
+      var lenaVer = parseVersion(lenaVersionArray[j]);
+
+      // major.minor가 같고 patch가 LENA보다 높으면 분석 대상
+      if (mailVer.major === lenaVer.major &&
+          mailVer.minor === lenaVer.minor &&
+          mailVer.patch > lenaVer.patch) {
+        return true;
+      }
+    }
+  }
+
+  // 어떤 버전도 분석 대상이 아니면 skip
+  return false;
+}
+
+/**
+ * 수집된 메일을 제품별로 그룹핑하고 messageId 기반 중복 제거
  * @param {Array<Object>} mails - collectUnreadMails() 결과
  * @returns {Object} { productKey: { productName, mails: [...], cveIds: [...] } }
  */
 function groupAndDeduplicate(mails) {
   var groups = {};
-  var seenCves = {};  // 전역 CVE 중복 체크
+  var seenMessageIds = {};  // 전역 messageId 중복 체크
 
   for (var i = 0; i < mails.length; i++) {
     var mail = mails[i];
@@ -184,27 +286,20 @@ function groupAndDeduplicate(mails) {
       };
     }
 
-    // CVE 기반 중복 체크
-    var mailCves = extractCveIds(mail.body);
-    var isDuplicate = false;
-
-    if (mailCves.length > 0) {
-      // 모든 CVE가 이미 처리된 경우 중복으로 판단
-      var allSeen = mailCves.every(function(cve) { return seenCves[cve]; });
-      if (allSeen) {
-        isDuplicate = true;
-        Logger.log("[Collector] 중복 메일 건너뜀: " + mail.subject +
-                   " (CVE: " + mailCves.join(", ") + ")");
-      }
+    // messageId 기반 중복 체크
+    if (seenMessageIds[mail.messageId]) {
+      Logger.log("[Collector] 중복 메일 건너뜀: " + mail.subject);
+      continue;
     }
+    seenMessageIds[mail.messageId] = true;
 
-    if (!isDuplicate) {
-      groups[key].mails.push(mail);
-      for (var j = 0; j < mailCves.length; j++) {
-        seenCves[mailCves[j]] = true;
-        if (groups[key].cveIds.indexOf(mailCves[j]) === -1) {
-          groups[key].cveIds.push(mailCves[j]);
-        }
+    groups[key].mails.push(mail);
+
+    // CVE 추출 (보고서용, 중복 판단에는 미사용)
+    var mailCves = extractCveIds(mail.body);
+    for (var j = 0; j < mailCves.length; j++) {
+      if (groups[key].cveIds.indexOf(mailCves[j]) === -1) {
+        groups[key].cveIds.push(mailCves[j]);
       }
     }
   }

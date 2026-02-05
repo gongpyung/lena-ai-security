@@ -33,6 +33,16 @@ function initHistorySheet() {
     sendSheet.setFrozenRows(1);
   }
 
+  // 처리 이력 시트
+  var processSheet = ss.getSheetByName("Process_History");
+  if (!processSheet) {
+    processSheet = ss.insertSheet("Process_History");
+    processSheet.appendRow([
+      "처리일시", "Message ID", "제품키", "메일 제목", "제품명"
+    ]);
+    processSheet.setFrozenRows(1);
+  }
+
   Logger.log("[History] 이력 시트 초기화 완료");
 }
 
@@ -157,4 +167,115 @@ function recordSendHistory(subject, recipients, stats, status) {
   ]);
 
   Logger.log("[History] 발송 이력 기록: " + status);
+}
+
+/**
+ * 메일 처리 이력 중복 체크 (캐시 기반 O(1) 조회)
+ *
+ * 복합키: messageId + "|" + productKey
+ * isCveRecorded()와 동일한 캐시 패턴 적용
+ *
+ * @param {Object} processCache - { loaded: boolean, ids: { compositeKey: true } }
+ * @param {Sheet|null} sheet - Process_History 시트 (null이면 자동 조회/생성)
+ * @param {string} messageId - Gmail 메시지 ID
+ * @param {string} productKey - 제품키 (예: "apache-tomcat")
+ * @returns {Object} { isDuplicate: boolean, sheet: Sheet } - 시트 참조도 반환 (자동 생성 대응)
+ */
+function isProcessed(processCache, sheet, messageId, productKey) {
+  // 시트 미존재 시 자동 조회/생성
+  if (!sheet) {
+    var ssId = getHistorySpreadsheetId();
+    var ss = SpreadsheetApp.openById(ssId);
+    sheet = ss.getSheetByName("Process_History");
+    if (!sheet) {
+      sheet = ss.insertSheet("Process_History");
+      sheet.appendRow(["처리일시", "Message ID", "제품키", "메일 제목", "제품명"]);
+      sheet.setFrozenRows(1);
+      processCache.loaded = true;
+      processCache.ids = {};
+      return { isDuplicate: false, sheet: sheet };
+    }
+  }
+
+  // 최초 호출 시 캐시 로드 (1회만 시트 읽기)
+  if (!processCache.loaded) {
+    var data = sheet.getDataRange().getValues();
+    processCache.ids = {};
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][1] && data[i][2]) {
+        processCache.ids[data[i][1] + "|" + data[i][2]] = true;
+      }
+    }
+    processCache.loaded = true;
+    Logger.log("[History] Process 캐시 로드 완료: " + Object.keys(processCache.ids).length + "건");
+  }
+
+  var compositeKey = messageId + "|" + productKey;
+  return { isDuplicate: processCache.ids[compositeKey] === true, sheet: sheet };
+}
+
+/**
+ * 메일 처리 이력 기록
+ *
+ * @param {Object} processCache - isProcessed()에서 사용하는 캐시 객체
+ * @param {Sheet} sheet - Process_History 시트
+ * @param {string} messageId - Gmail 메시지 ID
+ * @param {string} productKey - 제품키
+ * @param {string} subject - 메일 제목
+ * @param {string} productName - 제품명
+ */
+function recordProcessHistory(processCache, sheet, messageId, productKey, subject, productName) {
+  var timestamp = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+
+  sheet.appendRow([timestamp, messageId, productKey, subject, productName]);
+
+  // 캐시에 즉시 반영 (같은 실행 내 중복 방지)
+  if (processCache && processCache.ids) {
+    processCache.ids[messageId + "|" + productKey] = true;
+  }
+
+  Logger.log("[History] 처리 이력 기록: " + productName + " - " + subject);
+}
+
+/**
+ * 90일 초과 이력 정리 (주간 트리거용)
+ * Process_History, CVE_History 시트에서 오래된 행 삭제
+ */
+function cleanupHistory() {
+  var ssId = getHistorySpreadsheetId();
+  var ss = SpreadsheetApp.openById(ssId);
+  var cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - 90);
+
+  var totalDeleted = 0;
+  var sheetNames = ["Process_History", "CVE_History"];
+
+  for (var s = 0; s < sheetNames.length; s++) {
+    var sheet = ss.getSheetByName(sheetNames[s]);
+    if (!sheet) continue;
+
+    var data = sheet.getDataRange().getValues();
+    var rowsToDelete = [];
+
+    // 첫 번째 컬럼(처리일시)이 90일 초과인 행 수집 (헤더 제외)
+    for (var i = data.length - 1; i >= 1; i--) {
+      var rowDate = new Date(data[i][0]);
+      if (rowDate < cutoffDate) {
+        rowsToDelete.push(i + 1);  // 시트 행번호는 1-based
+      }
+    }
+
+    // 역순으로 삭제 (행번호 변동 방지)
+    for (var j = 0; j < rowsToDelete.length; j++) {
+      sheet.deleteRow(rowsToDelete[j]);
+    }
+
+    if (rowsToDelete.length > 0) {
+      Logger.log("[History] " + sheetNames[s] + ": " + rowsToDelete.length + "건 정리 완료 (90일 초과)");
+    }
+
+    totalDeleted += rowsToDelete.length;
+  }
+
+  Logger.log("[History] 이력 정리 완료: 총 " + totalDeleted + "건 삭제");
 }

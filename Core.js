@@ -53,6 +53,8 @@ function processSecurityEmails() {
 function processProductEmails(productKey, product) {
   var processed = 0;
   var errors = 0;
+  var processCache = { loaded: false, ids: {} };
+  var processSheet = null;
 
   try {
     var label = GmailApp.getUserLabelByName(product.gmailLabel);
@@ -61,7 +63,7 @@ function processProductEmails(productKey, product) {
       return {processed: 0, errors: 1};
     }
 
-    var threads = label.getThreads(0, MAX_THREADS);
+    var threads = GmailApp.search("label:" + product.gmailLabel + " is:unread", 0, MAX_THREADS);
     Logger.log("  대상 스레드: " + threads.length + "개");
 
     for (var i = 0; i < threads.length; i++) {
@@ -70,9 +72,11 @@ function processProductEmails(productKey, product) {
       try {
         // 중복 체크
         var messageId = thread.getMessages()[0].getId();
-        if (isDuplicate(messageId)) {
+        var checkResult = isProcessed(processCache, processSheet, messageId, productKey);
+        processSheet = checkResult.sheet;
+        if (checkResult.isDuplicate) {
           Logger.log("  [중복] 건너뜀: " + thread.getFirstMessageSubject());
-          thread.removeLabel(label);
+          thread.markRead();
           continue;
         }
 
@@ -80,17 +84,20 @@ function processProductEmails(productKey, product) {
         var subject = thread.getFirstMessageSubject();
         if (!matchesKeywords(subject, product.filterKeywords)) {
           Logger.log("  [필터링] 건너뜀: " + subject);
-          thread.removeLabel(label);
           continue;
         }
 
         // AI 분석 및 메일 발송
         processThread(thread, product, productKey);
-        recordHistory(messageId, subject, product.name);
+        try {
+          recordProcessHistory(processCache, processSheet, messageId, productKey, subject, product.name);
+        } catch (historyError) {
+          Logger.log("  [경고] 처리 이력 기록 실패 (발송은 완료): " + historyError.toString());
+        }
         processed++;
 
-        // 라벨 제거
-        thread.removeLabel(label);
+        // 처리 완료 표시
+        thread.markRead();
 
       } catch (e) {
         Logger.log("  [오류] 스레드 처리 실패: " + e.toString());
@@ -126,45 +133,27 @@ function processThread(thread, product, productKey) {
   Logger.log("  [분석 중] " + emailData.subject);
 
   // AI 분석
-  var analysis = analyzeWithGemini(emailData, product);
+  var analysis = analyzeWithGemini(emailData.body, emailData.subject);
 
-  if (!analysis || !analysis.relevance || analysis.relevance === "무관") {
-    Logger.log("  [필터링] AI 분석 결과 무관");
+  if (!analysis) {
+    Logger.log("  [필터링] AI 분석 실패 - analysis null");
     return;
   }
+
+  Logger.log("  [분석 완료] reportTag=" + analysis.reportTag + ", riskLevel=" + analysis.overallRiskLevel);
 
   // 메일 발송
   sendSecurityReport(emailData, analysis, product);
   Logger.log("  [완료] 보고서 발송");
 }
 
-/**
- * [Phase 4] AI 분석 (Gemini API)
- */
-function analyzeWithGemini(emailData, product) {
-  var prompt = buildAnalysisPrompt(emailData, product);
-
-  for (var attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      var response = callGeminiAPI(prompt);
-      return parseAnalysisResponse(response);
-    } catch (e) {
-      Logger.log("  [재시도 " + attempt + "/" + MAX_RETRIES + "] " + e.toString());
-      if (attempt < MAX_RETRIES) {
-        Utilities.sleep(RETRY_DELAY);
-      }
-    }
-  }
-
-  throw new Error("AI 분석 실패 (최대 재시도 초과)");
-}
 
 /**
  * [Phase 5] 보고서 메일 발송
  */
 function sendSecurityReport(emailData, analysis, product) {
   var recipients = RECIPIENT_GROUPS.security.join(", ");
-  var subject = "[LENA Security] " + product.name + " - " + analysis.summary;
+  var subject = analysis.reportTitle || ("[LENA Security] " + product.name + " - " + analysis.executiveSummary);
   var htmlBody = buildReportHTML(emailData, analysis, product);
 
   MailApp.sendEmail({
