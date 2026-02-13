@@ -40,7 +40,7 @@ var PRODUCTS = {
   "apache-tomcat": {
     name: "Apache Tomcat",
     gmailLabel: "LENA-TOMCAT",
-    filterKeywords: ["SECURITY", "ANNOUNCE", "RELEASE", "Released", "CVE"],
+    filterKeywords: ["SECURITY", "ANNOUNCE", "RELEASE", "Released", "CVE", "End of Support"],
     versions: {
       "Apache Tomcat": ["7.0.107", "8.5.100", "9.0.113", "10.1.50"]
     },
