@@ -613,7 +613,46 @@ function renderOriginalMail(originalBody, metadata) {
 }
 
 // ────────────────────────────────────────────────
-// 11. renderFooter(disclaimer, contactEmail)
+// 11. renderEngineVersions(versions)
+// ────────────────────────────────────────────────
+/**
+ * LENA 엔진 버전 정보 섹션
+ * table 기반 인라인 스타일
+ */
+function renderEngineVersions(versions) {
+  if (!versions) return '';
+
+  var items = '';
+  for (var name in versions) {
+    var ver = versions[name];
+    var verText = Array.isArray(ver) ? ver.map(escapeHtml).join(', ') : escapeHtml(ver);
+    items += '<tr><td style="padding:5px 0; font-size:13px; color:#333;"><strong>' + escapeHtml(name) + ':</strong> ' + verText + '</td></tr>';
+  }
+
+  return [
+    '<tr>',
+    '<td style="padding:20px 30px;">',
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">',
+    '<tr>',
+    '<td style="font-size:16px; font-weight:bold; color:#333; padding-bottom:10px;">',
+    '&#128295; LENA 엔진 버전',
+    '</td>',
+    '</tr>',
+    '<tr>',
+    '<td>',
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f4ff; padding:15px;">',
+    items,
+    '</table>',
+    '</td>',
+    '</tr>',
+    '</table>',
+    '</td>',
+    '</tr>'
+  ].join('\n');
+}
+
+// ────────────────────────────────────────────────
+// 12. renderFooter(disclaimer, contactEmail)
 // ────────────────────────────────────────────────
 /**
  * 푸터 - 면책 문구 + 연락처 + TLP 안내
@@ -651,7 +690,7 @@ function renderFooter(disclaimer, contactEmail) {
 }
 
 // ────────────────────────────────────────────────
-// 12. renderSingleReport(analysisResult)
+// 13. renderSingleReport(analysisResult)
 // ────────────────────────────────────────────────
 /**
  * 단일 메일 분석 결과를 완전한 HTML 섹션으로 조립
@@ -678,7 +717,7 @@ function renderSingleReport(analysisResult) {
 }
 
 // ────────────────────────────────────────────────
-// 13. escapeHtml(text)
+// 14. escapeHtml(text)
 // ────────────────────────────────────────────────
 /**
  * XSS 방지 HTML 이스케이프
