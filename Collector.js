@@ -74,15 +74,19 @@ function collectUnreadMails() {
       continue;
     }
 
-    // LENA 버전 가져오기 (versions 객체에서 첫 번째 값)
-    var lenaVersions = null;
+    // LENA 버전 가져오기 (versions 객체의 모든 엔진 버전을 통합)
+    var allLenaVersions = [];
     for (var vKey in product.versions) {
-      lenaVersions = product.versions[vKey];
-      break;  // 첫 번째 엔진의 버전만 사용
+      var ver = product.versions[vKey];
+      if (Array.isArray(ver)) {
+        allLenaVersions = allLenaVersions.concat(ver);
+      } else {
+        allLenaVersions.push(ver);
+      }
     }
 
     // LENA 버전이 없으면 안전하게 포함
-    if (!lenaVersions) {
+    if (allLenaVersions.length === 0) {
       filteredMails.push(mail);
       continue;
     }
@@ -91,7 +95,7 @@ function collectUnreadMails() {
     var mailVersions = extractVersionsFromMail(mail.subject, mail.body);
 
     // 분석 대상 여부 판단
-    if (shouldAnalyzeMail(mailVersions, lenaVersions)) {
+    if (shouldAnalyzeMail(mailVersions, allLenaVersions)) {
       filteredMails.push(mail);
     } else {
       Logger.log("[Collector] 버전 필터링 - 건너뜀 (LENA 미해당): " + mail.subject);

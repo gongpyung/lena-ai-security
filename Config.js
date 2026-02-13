@@ -42,7 +42,8 @@ var PRODUCTS = {
     gmailLabel: "LENA-TOMCAT",
     filterKeywords: ["SECURITY", "ANNOUNCE", "RELEASE", "Released", "CVE", "End of Support"],
     versions: {
-      "Apache Tomcat": ["7.0.107", "8.5.100", "9.0.113", "10.1.50"]
+      "Apache Tomcat": ["7.0.107", "8.5.100", "9.0.113", "10.1.50"],
+      "Apache Tomcat Native": ["1.3.1", "2.0.8"]
     },
     downloadUrlPattern: "https://tomcat.apache.org/download-{major}.cgi",
     nvdSearchPrefix: "cpe:2.3:a:apache:tomcat"
