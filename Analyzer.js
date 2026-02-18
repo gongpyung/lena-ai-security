@@ -117,9 +117,6 @@ function analyzeWithGemini(mailBody, mailSubject) {
   var systemPrompt = buildSystemPrompt(engineInfo);
   var fewShotExamples = buildFewShotExamples();
 
-  var url = "https://generativelanguage.googleapis.com/v1beta/models/" +
-            MODEL_NAME + ":generateContent?key=" + apiKey;
-
   // contents 구성: system instruction + few-shot + 실제 입력
   var contents = [];
 
@@ -149,24 +146,44 @@ function analyzeWithGemini(mailBody, mailSubject) {
     muteHttpExceptions: true
   };
 
-  // 재시도 로직
+  // 모델 Fallback 재시도 로직
   var response, responseCode, responseBody;
-  for (var attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    response = UrlFetchApp.fetch(url, options);
-    responseCode = response.getResponseCode();
-    responseBody = response.getContentText();
+  for (var m = 0; m < MODEL_LIST.length; m++) {
+    var currentModel = MODEL_LIST[m];
+    var url = "https://generativelanguage.googleapis.com/v1beta/models/" +
+              currentModel + ":generateContent?key=" + apiKey;
+    var succeeded = false;
 
-    if (responseCode === 200) break;
+    for (var attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      response = UrlFetchApp.fetch(url, options);
+      responseCode = response.getResponseCode();
+      responseBody = response.getContentText();
 
-    if (RETRY_CODES.indexOf(responseCode) !== -1 && attempt < MAX_RETRIES) {
-      Logger.log("[Analyzer] 재시도 " + attempt + "/" + MAX_RETRIES +
-                 " (HTTP " + responseCode + ") - " + (RETRY_DELAY * attempt) + "ms 대기");
-      Utilities.sleep(RETRY_DELAY * attempt);
-      continue;
+      if (responseCode === 200) { succeeded = true; break; }
+
+      if (RETRY_CODES.indexOf(responseCode) !== -1 && attempt < MAX_RETRIES) {
+        Logger.log("[Analyzer] " + currentModel + " 재시도 " + attempt + "/" + MAX_RETRIES +
+                   " (HTTP " + responseCode + ") - " + (RETRY_DELAY * attempt) + "ms 대기");
+        Utilities.sleep(RETRY_DELAY * attempt);
+      } else {
+        break;
+      }
     }
 
-    Logger.log("[Analyzer] API 호출 실패 (HTTP " + responseCode + "): " + responseBody);
-    throw new Error("Gemini API Error (HTTP " + responseCode + ")");
+    if (succeeded) break;
+
+    // 비-재시도 오류(400, 401 등)는 다음 모델로 넘기지 않고 즉시 실패
+    if (RETRY_CODES.indexOf(responseCode) === -1) {
+      Logger.log("[Analyzer] API 호출 실패 (비-재시도 오류 HTTP " + responseCode + "): " + responseBody);
+      throw new Error("Gemini API Error (HTTP " + responseCode + ")");
+    }
+
+    if (m < MODEL_LIST.length - 1) {
+      Logger.log("[Fallback] " + currentModel + " 모두 실패 → " + MODEL_LIST[m + 1] + "으로 전환");
+    } else {
+      Logger.log("[Analyzer] API 호출 최종 실패 (HTTP " + responseCode + "): " + responseBody);
+      throw new Error("Gemini API Error (HTTP " + responseCode + ") - 모든 모델 실패");
+    }
   }
 
   var data = JSON.parse(responseBody);

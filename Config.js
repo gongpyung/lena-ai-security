@@ -20,7 +20,10 @@ var RETRY_DELAY = 5000;
 var RETRY_CODES = [429, 503];
 
 // === Gemini 모델 설정 ===
-var MODEL_NAME = "gemini-3-flash-preview";
+var MODEL_LIST = [
+  "gemini-3-flash-preview",   // Primary
+  "gemini-2.5-flash"          // Fallback
+];
 
 // === 이력 관리 ===
 var HISTORY_SHEET_NAME = "CVE_History";

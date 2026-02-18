@@ -156,7 +156,7 @@ function renderDigestMeta(analysisTime, stats) {
     '</tr>',
     '<tr>',
     '<td style="padding:8px 12px; font-size:12px; color:#757575; width:120px;">분석 엔진</td>',
-    '<td style="padding:8px 12px; font-size:13px; color:#333;">' + escapeHtml(MODEL_NAME) + ' (Structured Output)</td>',
+    '<td style="padding:8px 12px; font-size:13px; color:#333;">' + escapeHtml(MODEL_LIST[0]) + ' (Structured Output)</td>',
     '</tr>',
     '</table>',
     '</td>',

@@ -5,9 +5,10 @@
 /**
  * [Phase 6] Gemini API 호출
  */
-function callGeminiAPI(prompt) {
+function callGeminiAPI(prompt, modelName) {
+  modelName = modelName || MODEL_LIST[0];
   var apiKey = getApiKey();
-  var url = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL_NAME + ":generateContent?key=" + apiKey;
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/" + modelName + ":generateContent?key=" + apiKey;
 
   var payload = {
     contents: [{
