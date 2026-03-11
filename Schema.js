@@ -87,12 +87,12 @@ function getVersionAnalysisSchema() {
       },
       updateVerdict: {
         type: "STRING",
-        description: "업데이트 판단",
+        description: "업데이트 판단. LENA가 여러 메이저 버전을 사용하는 경우 각 버전별 독립 판단 후 가장 높은 위험도를 채택 (REQUIRED > RECOMMENDED > NOT_AFFECTED)",
         enum: ["REQUIRED", "RECOMMENDED", "NOT_AFFECTED", "UNDETERMINED"]
       },
       updateVerdictReason: {
         type: "STRING",
-        description: "판단 근거 (1-2문장)"
+        description: "판단 근거. LENA가 여러 메이저 버전을 사용하면 각 버전별 판단 근거를 모두 포함 (1-3문장)"
       }
     },
     required: ["productName", "lenaVersions", "mailMentionedVersions",

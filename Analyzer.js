@@ -28,6 +28,12 @@ function buildSystemPrompt(engineInfo) {
     "- '해당 없음(NOT_AFFECTED)': LENA 사용 버전이 완전히 다른 버전 라인이거나 영향 범위 밖",
     "- '판단 불가(UNDETERMINED)': 메일에서 영향 범위나 버전을 특정할 수 없는 경우",
     "",
+    "[다중 버전 판단 규칙]",
+    "- LENA가 동일 제품의 여러 메이저 버전을 사용하는 경우 (예: 1.3.1과 2.0.8), 각 LENA 버전별로 독립적으로 판단합니다.",
+    "- 최종 updateVerdict는 각 버전별 판단 중 가장 높은 위험도를 채택합니다. (우선순위: REQUIRED > RECOMMENDED > NOT_AFFECTED)",
+    "- 예시: 메일이 1.3.7 출시를 알리고 LENA가 1.3.1과 2.0.8을 모두 사용하면, 1.3.1 기준으로는 RECOMMENDED이고 2.0.8 기준으로는 NOT_AFFECTED이므로 최종 판단은 RECOMMENDED입니다.",
+    "- updateVerdictReason에 각 버전별 판단 근거를 모두 포함하세요.",
+    "",
     "[응답 규칙]",
     "- 반드시 한국어로 작성",
     "- CVSS 점수를 알 수 없으면 cvssScore를 -1로, cvssSeverity를 UNKNOWN으로 설정",
@@ -92,9 +98,50 @@ function buildFewShotExamples() {
     }]
   }, null, 2);
 
+  // 예시 2: 다중 메이저 버전 시나리오 (Apache Tomcat Native)
+  var exampleInput2 = [
+    "Subject: [ANNOUNCE] Apache Tomcat Native 1.3.7 released",
+    "The Apache Tomcat team is pleased to announce the release of Apache Tomcat Native 1.3.7.",
+    "This release includes bug fixes and improvements.",
+    "Changes in 1.3.7:",
+    "- Fixed memory leak in SSL handshake",
+    "- Updated OpenSSL compatibility",
+    "Download: https://tomcat.apache.org/download-native.cgi"
+  ].join("\n");
+
+  var exampleOutput2 = JSON.stringify({
+    reportTag: "Release",
+    productName: "Apache Tomcat Native",
+    reportTitle: "[Release] Apache Tomcat Native 1.3.7 릴리즈",
+    executiveSummary: "Apache Tomcat Native 1.3.7이 릴리즈되었습니다. LENA에서 사용 중인 1.3.1과 동일한 1.3.x 버전 라인의 업데이트로, SSL 핸드셰이크 메모리 누수 수정 등이 포함되어 업데이트를 권장합니다.",
+    overallRiskLevel: "LOW",
+    immediateActionRequired: false,
+    technicalSummary: "Apache Tomcat Native 1.3.7은 SSL 핸드셰이크 과정의 메모리 누수 수정과 OpenSSL 호환성 업데이트를 포함합니다. 보안 취약점 수정은 포함되지 않았습니다.",
+    cveList: [],
+    impactAnalysis: "보안 취약점은 없으나, SSL 관련 메모리 누수 수정이 포함되어 안정성 향상을 위해 업데이트를 고려할 수 있습니다.",
+    actionGuide: [
+      "LENA 사용 중인 Tomcat Native 1.3.1은 동일 1.3.x 라인이므로 1.3.7로 업데이트 검토 권장",
+      "다음 정기 패치 윈도우에서 업데이트 적용 검토"
+    ],
+    downloadLinks: [{
+      label: "Apache Tomcat Native 다운로드",
+      url: "https://tomcat.apache.org/download-native.cgi"
+    }],
+    versionAnalysis: [{
+      productName: "Apache Tomcat Native",
+      lenaVersions: "1.3.1, 2.0.8",
+      mailMentionedVersions: "1.3.7",
+      isAffected: false,
+      updateVerdict: "RECOMMENDED",
+      updateVerdictReason: "LENA Tomcat Native 1.3.1은 메일의 1.3.7과 동일한 1.3.x 버전 라인으로, 근접 버전이므로 업데이트를 권장합니다. 2.0.8은 다른 메이저 버전 라인(2.x)이므로 해당 없으나, 1.3.1 기준 판단(RECOMMENDED)을 최종 판단으로 채택합니다."
+    }]
+  }, null, 2);
+
   return [
     { role: "user", parts: [{ text: exampleInput }] },
-    { role: "model", parts: [{ text: exampleOutput }] }
+    { role: "model", parts: [{ text: exampleOutput }] },
+    { role: "user", parts: [{ text: exampleInput2 }] },
+    { role: "model", parts: [{ text: exampleOutput2 }] }
   ];
 }
 

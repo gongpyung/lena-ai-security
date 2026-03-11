@@ -2,6 +2,15 @@
 
 All notable changes to LENA AI Security Mail Automation will be documented in this file.
 
+## [v3.0.3] - 2026-03-11
+
+### Fixed
+- **다중 메이저 버전 사용 시 updateVerdict 오판 수정**
+  - LENA가 동일 제품의 여러 메이저 버전을 사용할 때 (예: Tomcat Native 1.3.1, 2.0.8) Gemini가 높은 버전(2.0.8) 기준으로만 판단하여 근접 버전(1.3.7 vs 1.3.1)도 `NOT_AFFECTED`로 반환하던 문제 수정
+  - Analyzer.js 시스템 프롬프트에 `[다중 버전 판단 규칙]` 추가: 각 LENA 버전별 독립 판단 후 최고 위험도 채택
+  - Analyzer.js Few-shot 예시 추가: Tomcat Native 1.3.7 릴리즈 + LENA 1.3.1/2.0.8 다중 버전 시나리오
+  - Schema.js `updateVerdict`/`updateVerdictReason` description에 다중 버전 판단 규칙 안내 추가
+
 ## [v3.0.2] - 2026-02-13
 
 ### Fixed
