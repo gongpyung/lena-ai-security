@@ -42,8 +42,8 @@ function runSetupWizard() {
     Logger.log("✓ 트리거 설정 완료\n");
 
     Logger.log("=== 초기 설정 완료 ===");
-    Logger.log("이제 processSecurityEmails() 함수가 매일 자동 실행됩니다.");
-    Logger.log("즉시 테스트하려면 processSecurityEmails() 함수를 수동 실행하세요.");
+    Logger.log("이제 runDailySecurityDigest() 함수가 매일 자동 실행됩니다.");
+    Logger.log("즉시 테스트하려면 runDailySecurityDigest() 함수를 수동 실행하세요.");
 
   } catch (e) {
     Logger.log("[오류] 초기 설정 실패: " + e.toString());
@@ -120,19 +120,20 @@ function createTriggers() {
   var triggers = ScriptApp.getProjectTriggers();
   for (var i = 0; i < triggers.length; i++) {
     if (triggers[i].getHandlerFunction() === "processSecurityEmails" ||
+        triggers[i].getHandlerFunction() === "runDailySecurityDigest" ||
         triggers[i].getHandlerFunction() === "cleanupHistory") {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }
 
   // 메일 처리 트리거 (매일 오전 8시)
-  ScriptApp.newTrigger("processSecurityEmails")
+  ScriptApp.newTrigger("runDailySecurityDigest")
     .timeBased()
     .everyDays(1)
     .atHour(8)
     .create();
 
-  Logger.log("  생성: processSecurityEmails (매일 08:00)");
+  Logger.log("  생성: runDailySecurityDigest (매일 08:00)");
 
   // 이력 정리 트리거 (매주 일요일 오전 3시)
   ScriptApp.newTrigger("cleanupHistory")

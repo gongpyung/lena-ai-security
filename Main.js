@@ -150,7 +150,7 @@ function setupDailyTrigger() {
   var triggers = ScriptApp.getProjectTriggers();
   for (var i = 0; i < triggers.length; i++) {
     var funcName = triggers[i].getHandlerFunction();
-    if (funcName === "summarizeEmailSystem" || funcName === "runDailySecurityDigest") {
+    if (funcName === "summarizeEmailSystem" || funcName === "runDailySecurityDigest" || funcName === "processSecurityEmails") {
       ScriptApp.deleteTrigger(triggers[i]);
       Logger.log("[Main] 기존 트리거 삭제: " + funcName);
     }
