@@ -45,7 +45,7 @@ function getCveItemSchema() {
       },
       fixedVersion: {
         type: "STRING",
-        description: "수정된 버전 (예: '9.0.113'). 미패치 시 '미패치'"
+        description: "수정된 버전 (예: '9.0.115'). 미패치 시 '미패치'"
       },
       patchAvailable: {
         type: "BOOLEAN",

@@ -20,7 +20,7 @@ function testBuildEngineVersions() {
   assert(engines["Apache httpd"] === "2.4.66", "httpd version");
   assert(engines["Apache Tomcat"].length === 4, "tomcat versions count");
   assert(engines["Apache TomEE"].length === 3, "tomee versions count");
-  assert(engines["Nginx"] === "1.29.3", "nginx version");
+  assert(engines["Nginx"] === "1.29.5", "nginx version");
   Logger.log("[TEST] buildEngineVersions: PASS");
 }
 

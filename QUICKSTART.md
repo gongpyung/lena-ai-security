@@ -95,7 +95,7 @@ runDailySecurityDigest()
 var PRODUCTS = {
   "apache-tomcat": {
     versions: {
-      "Apache Tomcat": ["7.0.107", "8.5.100", "9.0.113", "10.1.50"]
+      "Apache Tomcat": ["7.0.107", "8.5.100", "9.0.115", "10.1.52"]
     }
     // ...
   }

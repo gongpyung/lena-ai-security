@@ -93,9 +93,9 @@
 | 제품 | Gmail 라벨 | 현재 버전 | NVD 접두사 |
 |------|:-----------:|----------|-----------|
 | **Apache HTTP Server** | `LENA-APACHE` | `2.4.66` | `cpe:2.3:a:apache:http_server` |
-| **Apache Tomcat** | `LENA-TOMCAT` | `7.0.107` `8.5.100` `9.0.113` `10.1.50` | `cpe:2.3:a:apache:tomcat` |
+| **Apache Tomcat** | `LENA-TOMCAT` | `7.0.107` `8.5.100` `9.0.115` `10.1.52` | `cpe:2.3:a:apache:tomcat` |
 | **Apache TomEE** | `LENA-TOMCAT` | `1.7.2` `7.1.4` `8.0.16` | `cpe:2.3:a:apache:tomee` |
-| **Nginx** | `LENA-NGINX` | `1.29.3` | `cpe:2.3:a:f5:nginx` |
+| **Nginx** | `LENA-NGINX` | `1.29.5` | `cpe:2.3:a:f5:nginx` |
 
 ---
 

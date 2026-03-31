@@ -45,8 +45,8 @@ var PRODUCTS = {
     gmailLabel: "LENA-TOMCAT",
     filterKeywords: ["SECURITY", "ANNOUNCE", "ANN", "RELEASE", "Released", "Available", "CVE", "End of Support"],
     versions: {
-      "Apache Tomcat": ["7.0.107", "8.5.100", "9.0.113", "10.1.50"],
-      "Apache Tomcat Native": ["1.3.1", "2.0.8"]
+      "Apache Tomcat": ["7.0.107", "8.5.100", "9.0.115", "10.1.52"],
+      "Apache Tomcat Native": ["1.3.6", "2.0.13"]
     },
     downloadUrlPattern: "https://tomcat.apache.org/download-{major}.cgi",
     nvdSearchPrefix: "cpe:2.3:a:apache:tomcat"
@@ -66,7 +66,7 @@ var PRODUCTS = {
     gmailLabel: "LENA-NGINX",
     filterKeywords: ["Release", "Security"],
     versions: {
-      "Nginx": "1.29.3"
+      "Nginx": "1.29.5"
     },
     downloadUrlPattern: "https://nginx.org/en/download.html",
     nvdSearchPrefix: "cpe:2.3:a:f5:nginx"

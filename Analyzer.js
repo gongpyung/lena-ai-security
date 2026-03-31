@@ -29,9 +29,9 @@ function buildSystemPrompt(engineInfo) {
     "- '판단 불가(UNDETERMINED)': 메일에서 영향 범위나 버전을 특정할 수 없는 경우",
     "",
     "[다중 버전 판단 규칙]",
-    "- LENA가 동일 제품의 여러 메이저 버전을 사용하는 경우 (예: 1.3.1과 2.0.8), 각 LENA 버전별로 독립적으로 판단합니다.",
+    "- LENA가 동일 제품의 여러 메이저 버전을 사용하는 경우 (예: 1.3.6과 2.0.13), 각 LENA 버전별로 독립적으로 판단합니다.",
     "- 최종 updateVerdict는 각 버전별 판단 중 가장 높은 위험도를 채택합니다. (우선순위: REQUIRED > RECOMMENDED > NOT_AFFECTED)",
-    "- 예시: 메일이 1.3.7 출시를 알리고 LENA가 1.3.1과 2.0.8을 모두 사용하면, 1.3.1 기준으로는 RECOMMENDED이고 2.0.8 기준으로는 NOT_AFFECTED이므로 최종 판단은 RECOMMENDED입니다.",
+    "- 예시: 메일이 1.3.7 출시를 알리고 LENA가 1.3.6과 2.0.13을 모두 사용하면, 1.3.6 기준으로는 RECOMMENDED이고 2.0.13 기준으로는 NOT_AFFECTED이므로 최종 판단은 RECOMMENDED입니다.",
     "- updateVerdictReason에 각 버전별 판단 근거를 모두 포함하세요.",
     "",
     "[응답 규칙]",
@@ -61,7 +61,7 @@ function buildFewShotExamples() {
     reportTag: "Security",
     productName: "Apache Tomcat",
     reportTitle: "[Security] Apache Tomcat Request Smuggling 취약점 (CVE-2024-50379)",
-    executiveSummary: "Apache Tomcat에서 심각도 Critical(9.8) 수준의 Request Smuggling 취약점이 발견되었습니다. LENA에서 사용 중인 Tomcat 9.0.113은 영향 범위 밖이나, 동일 버전 라인의 근접 버전으로 예방적 업데이트를 권장합니다.",
+    executiveSummary: "Apache Tomcat에서 심각도 Critical(9.8) 수준의 Request Smuggling 취약점이 발견되었습니다. LENA에서 사용 중인 Tomcat 9.0.115은 영향 범위 밖이나, 동일 버전 라인의 근접 버전으로 예방적 업데이트를 권장합니다.",
     overallRiskLevel: "HIGH",
     immediateActionRequired: false,
     technicalSummary: "CVE-2024-50379는 HTTP/2 요청 처리 과정에서 발생하는 Request Smuggling 취약점입니다. 공격자가 비정상적인 HTTP/2 요청을 전송하여 프론트엔드와 백엔드 서버 간의 요청 경계를 혼동시킬 수 있습니다.",
@@ -80,7 +80,7 @@ function buildFewShotExamples() {
     }],
     impactAnalysis: "본 취약점은 네트워크를 통해 원격으로 악용 가능하며, 인증 없이 공격이 가능합니다. Request Smuggling을 통해 캐시 포이즈닝, 세션 하이재킹, 웹 방화벽 우회 등의 2차 공격이 가능합니다.",
     actionGuide: [
-      "LENA 사용 중인 Tomcat 9.0.113은 수정 버전(9.0.98) 이상이므로 즉각 패치는 불필요",
+      "LENA 사용 중인 Tomcat 9.0.115은 수정 버전(9.0.98) 이상이므로 즉각 패치는 불필요",
       "WAF/IDS에서 비정상 HTTP/2 요청 패턴 모니터링 규칙 추가 권장",
       "다음 정기 패치 윈도우에서 최신 버전 업데이트 검토"
     ],
@@ -90,11 +90,11 @@ function buildFewShotExamples() {
     }],
     versionAnalysis: [{
       productName: "Apache Tomcat",
-      lenaVersions: "7.0.107, 8.5.100, 9.0.113, 10.1.50",
+      lenaVersions: "7.0.107, 8.5.100, 9.0.115, 10.1.52",
       mailMentionedVersions: "9.0.0.M1 ~ 9.0.97, 10.1.0-M1 ~ 10.1.33, 11.0.0-M1 ~ 11.0.1",
       isAffected: false,
       updateVerdict: "RECOMMENDED",
-      updateVerdictReason: "LENA Tomcat 9.0.113은 수정 버전(9.0.98) 이상이나, 10.1.50도 수정 버전(10.1.34) 이상으로 직접 영향은 없습니다. 다만 동일 버전 라인의 근접 버전이므로 최신 보안 패치 적용을 권장합니다."
+      updateVerdictReason: "LENA Tomcat 9.0.115은 수정 버전(9.0.98) 이상이나, 10.1.52도 수정 버전(10.1.34) 이상으로 직접 영향은 없습니다. 다만 동일 버전 라인의 근접 버전이므로 최신 보안 패치 적용을 권장합니다."
     }]
   }, null, 2);
 
@@ -113,14 +113,14 @@ function buildFewShotExamples() {
     reportTag: "Release",
     productName: "Apache Tomcat Native",
     reportTitle: "[Release] Apache Tomcat Native 1.3.7 릴리즈",
-    executiveSummary: "Apache Tomcat Native 1.3.7이 릴리즈되었습니다. LENA에서 사용 중인 1.3.1과 동일한 1.3.x 버전 라인의 업데이트로, SSL 핸드셰이크 메모리 누수 수정 등이 포함되어 업데이트를 권장합니다.",
+    executiveSummary: "Apache Tomcat Native 1.3.7이 릴리즈되었습니다. LENA에서 사용 중인 1.3.6과 동일한 1.3.x 버전 라인의 업데이트로, SSL 핸드셰이크 메모리 누수 수정 등이 포함되어 업데이트를 권장합니다.",
     overallRiskLevel: "LOW",
     immediateActionRequired: false,
     technicalSummary: "Apache Tomcat Native 1.3.7은 SSL 핸드셰이크 과정의 메모리 누수 수정과 OpenSSL 호환성 업데이트를 포함합니다. 보안 취약점 수정은 포함되지 않았습니다.",
     cveList: [],
     impactAnalysis: "보안 취약점은 없으나, SSL 관련 메모리 누수 수정이 포함되어 안정성 향상을 위해 업데이트를 고려할 수 있습니다.",
     actionGuide: [
-      "LENA 사용 중인 Tomcat Native 1.3.1은 동일 1.3.x 라인이므로 1.3.7로 업데이트 검토 권장",
+      "LENA 사용 중인 Tomcat Native 1.3.6은 동일 1.3.x 라인이므로 1.3.7로 업데이트 검토 권장",
       "다음 정기 패치 윈도우에서 업데이트 적용 검토"
     ],
     downloadLinks: [{
@@ -129,11 +129,11 @@ function buildFewShotExamples() {
     }],
     versionAnalysis: [{
       productName: "Apache Tomcat Native",
-      lenaVersions: "1.3.1, 2.0.8",
+      lenaVersions: "1.3.6, 2.0.13",
       mailMentionedVersions: "1.3.7",
       isAffected: false,
       updateVerdict: "RECOMMENDED",
-      updateVerdictReason: "LENA Tomcat Native 1.3.1은 메일의 1.3.7과 동일한 1.3.x 버전 라인으로, 근접 버전이므로 업데이트를 권장합니다. 2.0.8은 다른 메이저 버전 라인(2.x)이므로 해당 없으나, 1.3.1 기준 판단(RECOMMENDED)을 최종 판단으로 채택합니다."
+      updateVerdictReason: "LENA Tomcat Native 1.3.6은 메일의 1.3.7과 동일한 1.3.x 버전 라인으로, 근접 버전이므로 업데이트를 권장합니다. 2.0.13은 다른 메이저 버전 라인(2.x)이므로 해당 없으나, 1.3.6 기준 판단(RECOMMENDED)을 최종 판단으로 채택합니다."
     }]
   }, null, 2);
 
